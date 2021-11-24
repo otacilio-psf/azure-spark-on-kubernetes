@@ -13,6 +13,6 @@ az role assignment create --assignee $USER_ID --role "Storage Blob Data Contribu
 --scope "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Storage/storageAccounts/${STG_ACC_NAME}"
 
 # Synapse Workspace
-SYNAPSE_ID= $(az synapse workspace show --name $SYNAPSE_NAME --resource-group $RESOURCE_GROUP | python3 -c "import sys, json;j = json.load(sys.stdin);print(j['identity']['principalId'])")
+SYNAPSE_ID=$(az synapse workspace show --name $SYNAPSE_NAME --resource-group $RESOURCE_GROUP | python3 -c "import sys, json;j = json.load(sys.stdin);print(j['identity']['principalId'])")
 az role assignment create --assignee $SYNAPSE_ID --role "Storage Blob Data Contributor" \
 --scope "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.Storage/storageAccounts/${STG_ACC_NAME}"

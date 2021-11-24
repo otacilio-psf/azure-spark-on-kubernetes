@@ -25,7 +25,7 @@ bash infra/03-create-lake.sh
 
 bash infra/04-create-synapse.sh
 
-bash infra/05-service-account.sh
+bash infra/05-access-assignments.sh
 
 ```
 
@@ -136,7 +136,7 @@ k logs $SPARK_APP_NAME -n processing --follow
 ## Azure Synapse Serveless SQL Poll
 Acessar o Synapse workspace através do link gerado
 ```
-bash infra\04-get-workspace-url.sh
+bash infra/04-get-workspace-url.sh
 
 ```
 Para começar a usar siga os passos
