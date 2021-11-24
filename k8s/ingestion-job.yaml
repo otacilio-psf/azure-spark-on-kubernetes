@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ingestion-pod-ee5d8a4e
+  namespace: ingestion
+spec:
+  containers:
+  - env:
+    - name: AZURE_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          key: AZURE_CLIENT_ID
+          name: azure-service-account
+    - name: AZURE_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          key: AZURE_CLIENT_SECRET
+          name: azure-service-account
+    - name: AZURE_TENANT_ID
+      valueFrom:
+        secretKeyRef:
+          key: AZURE_TENANT_ID
+          name: azure-service-account
+    image: otaciliopsf/cde-bootcamp:desafio-mod4-ingestion
+    imagePullPolicy: Always
+    name: ingetion
+    resources:
+      limits:
+        cpu: '1'
+        memory: 800Mi
+  restartPolicy: Never
+

@@ -1,0 +1,46 @@
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: spark-job-igti-desafio-212ef366
+  namespace: processing
+spec:
+  deps:
+    pyFiles:
+    - local:///opt/spark/work-dir/dimensao_cursos.csv
+    - local:///opt/spark/work-dir/dimensao_municipio.csv
+    - local:///opt/spark/work-dir/schema.py
+  driver:
+    coreLimit: 1200m
+    cores: 1
+    envSecretKeyRefs:
+      AZURE_CLIENT_ID:
+        key: AZURE_CLIENT_ID
+        name: azure-service-account
+      AZURE_CLIENT_SECRET:
+        key: AZURE_CLIENT_SECRET
+        name: azure-service-account
+      AZURE_TENANT_ID:
+        key: AZURE_TENANT_ID
+        name: azure-service-account
+    labels:
+      version: 3.1.1
+    memory: 1g
+    serviceAccount: spark
+  executor:
+    cores: 1
+    instances: 3
+    labels:
+      version: 3.1.1
+    memory: 2g
+  image: docker.io/otaciliopsf/cde-bootcamp:desafio-mod4
+  imagePullPolicy: Always
+  mainApplicationFile: local:///opt/spark/work-dir/app.py
+  mode: cluster
+  restartPolicy:
+    type: Never
+  sparkConf:
+    spark.sql.catalog.spark_catalog: org.apache.spark.sql.delta.catalog.DeltaCatalog
+    spark.sql.extensions: io.delta.sql.DeltaSparkSessionExtension
+  sparkVersion: 3.1.1
+  type: Python
+

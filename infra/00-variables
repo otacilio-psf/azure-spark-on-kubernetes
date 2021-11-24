@@ -1,0 +1,8 @@
+export RESOURCE_GROUP='rg-igti-bootcamp'
+export LOCATION='westeurope'
+export AKS_NAME='aks-igti-bootcamp'
+export STG_ACC_NAME='datalakeigtibootcamp'
+export LAKE_NAME='datalake'
+export SYNAPSE_NAME='synapse-igti-bootcamp'
+export SYNAPSE_USER='otacilioadmin'
+export SYNAPSE_PASSWORD='senhasuperforte123!'

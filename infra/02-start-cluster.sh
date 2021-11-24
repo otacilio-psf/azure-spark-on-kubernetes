@@ -1,0 +1,1 @@
+az aks start --resource-group $RESOURCE_GROUP --name $AKS_NAME

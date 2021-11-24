@@ -1,0 +1,1 @@
+az aks create --resource-group $RESOURCE_GROUP --name $AKS_NAME --location $LOCATION --node-count 5 --node-vm-size Standard_D2_v3 --generate-ssh-keys
