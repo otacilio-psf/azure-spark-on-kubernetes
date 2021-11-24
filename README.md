@@ -9,7 +9,7 @@
 * Utilizar Azure Synapse Serveless SQL Poll para servir os dados
 
 ## Arquitetura
-![arquitetura](.attachment\arquitetura.drawio.png "arquitetura")
+![arquitetura](.attachment/arquitetura.drawio.png "arquitetura")
 
 # Passos
 
@@ -141,7 +141,7 @@ bash infra\04-get-workspace-url.sh
 ```
 Para começar a usar siga os passos
 
-![steps-synapse](.attachment\synapse.png "steps-synapse")
+![steps-synapse](.attachment/synapse.png "steps-synapse")
 
 Rodar o conteudo do script create-synapse-view.sql no Synapse workspace para criar a view da tabela no lake
 
