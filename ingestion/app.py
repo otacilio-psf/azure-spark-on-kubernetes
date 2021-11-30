@@ -1,25 +1,28 @@
 import requests
 import zipfile
 import os
-from azure.storage.filedatalake import DataLakeServiceClient
 from azure.identity import ClientSecretCredential
+from azurecloudhandler.datalake_gen2 import ADSL2DataLoad
+
+credential = ClientSecretCredential(
+    client_id = os.getenv("AZURE_CLIENT_ID"),
+    client_secret = os.getenv("AZURE_CLIENT_SECRET"),
+    tenant_id = os.getenv("AZURE_TENANT_ID")
+)
 
 class Ingestion:
 
-    def __init__(self, connection, container):
-        credential = ClientSecretCredential(connection['tenant_id'],
-                                            connection['client_id'],
-                                            connection['client_secret'])
-        account_url = f"https://{connection['storage_account_name']}.dfs.core.windows.net"
-        self._adls = DataLakeServiceClient(account_url=account_url, credential=credential)
-        
-        self._fs = self._adls.get_file_system_client(file_system=container)
-    
-    def _upload_file(self, local_file_path, remote_file_path):
-        file_client = self._fs.get_file_client(remote_file_path)
-        with open(local_file_path,'r') as local_file:
-            file_contents = local_file.read()
-            file_client.upload_data(file_contents, overwrite=True)
+    def __init__(self, source_url, local_file_path, remote_file_path, inside_zip_path, file_name, storage_account_name, file_system_name):
+        self._source_url = source_url
+        self._local_file_path = local_file_path
+        self._remote_file_path = remote_file_path
+        self._inside_zip_path = inside_zip_path
+        self._file_name = file_name
+        self._dload = ADSL2DataLoad(
+            storage_account_name = storage_account_name,
+            file_system_name = file_system_name,
+            credential = credential
+            )
     
     def _extract(self):
         os.makedirs("./tmp", exist_ok=True)
@@ -27,27 +30,29 @@ class Ingestion:
 
         # download data
         print("Downloading the data...")
-        source_url = 'https://download.inep.gov.br/microdados/Enade_Microdados/microdados_Enade_2017_portal_2018.10.09.zip'
-        r = requests.get(source_url, stream=True)
+        source_url = self._source_url
+        session = requests.Session()
+        r = session.get(source_url, stream=True)
         if r.status_code == requests.codes.OK:
-            with open("./tmp/microdados_Enade_2017.zip", "wb") as new_file:
-                for part in r.iter_content(chunk_size=1024):
+            with open("./tmp/temp_file.zip", "wb") as new_file:
+                for part in r.iter_content(chunk_size=1024*1024*5):
                     new_file.write(part)
         else:
             r.raise_for_status()
         
         # unzip data
         print("Unzip the data...")
-        with zipfile.ZipFile("./tmp/microdados_Enade_2017.zip", 'r') as zip_data:
-            zip_data.extract("3.DADOS/MICRODADOS_ENADE_2017.txt", "./data")
+        with zipfile.ZipFile("./tmp/temp_file.zip", 'r') as zip_data:
+            zip_data.extract(self._inside_zip_path, "./data")
         
     def _load(self):
-        file_path = "./data/3.DADOS/"
-        file_name = "MICRODADOS_ENADE_2017.txt"
-
+        
         # upload file
-        print(f"Upload {file_name} to Lake")
-        self._upload_file(file_path+file_name, 'bronze/enade/MICRODADOS_ENADE_2017.txt')
+        print(f"Upload {self._file_name} to Lake")
+        self._dload.upload_file(
+            self._local_file_path+self._file_name,
+            self._remote_file_path+self._file_name
+            )
 
     def start(self):
         self._extract()
@@ -56,13 +61,22 @@ class Ingestion:
 
 if __name__ == "__main__":
 
-    connection = {
-        'tenant_id': os.getenv('AZURE_TENANT_ID'),
-        'client_id': os.getenv('AZURE_CLIENT_ID'),
-        'client_secret': os.getenv('AZURE_CLIENT_SECRET'),
-        'storage_account_name': 'datalakeigtibootcamp'
-    }
+    source_url = 'https://download.inep.gov.br/microdados/Enade_Microdados/microdados_Enade_2017_portal_2018.10.09.zip'
+    local_file_path = "./data/3.DADOS/"
+    remote_file_path = "bronze/enade/"
+    inside_zip_path = "3.DADOS/MICRODADOS_ENADE_2017.txt"
+    file_name = "MICRODADOS_ENADE_2017.txt"
+    storage_account_name = os.getenv("STG_ACC_NAME")
+    file_system_name = os.getenv("LAKE_NAME")
 
-    container = 'datalake'
-
-    Ingestion(connection, container).start()
+    ings = Ingestion(
+        source_url,
+        local_file_path,
+        remote_file_path,
+        inside_zip_path,
+        file_name,
+        storage_account_name,
+        file_system_name
+        )
+    
+    ings.start()

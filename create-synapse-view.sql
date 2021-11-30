@@ -19,7 +19,7 @@ AS
 SELECT *
 FROM 
     OPENROWSET(
-        BULK 'https://datalakeigtibootcamp.dfs.core.windows.net/datalake/gold/enade/',
+        BULK 'https://datalakeigtibootcamp.dfs.core.windows.net/lakehouse/gold/enade/',
         FORMAT='DELTA'
     ) AS [result]
 GO

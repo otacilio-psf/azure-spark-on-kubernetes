@@ -1,5 +1,5 @@
 # Service Principal
-az ad sp create-for-rbac --name "igti-service-account" --role Contributor | python3 -c "import sys, json;j = json.load(sys.stdin);print('AZURE_CLIENT_ID=',j['appId'], sep='');print('AZURE_CLIENT_SECRET=',j['password'], sep='');print('AZURE_TENANT_ID=',j['tenant'], sep='')" > .env
+az ad sp create-for-rbac --name $APP_NAME --role Contributor | python3 -c "import sys, json;j = json.load(sys.stdin);print('AZURE_CLIENT_ID=',j['appId'], sep='');print('AZURE_CLIENT_SECRET=',j['password'], sep='');print('AZURE_TENANT_ID=',j['tenant'], sep='')" > .env
 az account list |  python3 -c "import sys, json; print('AZURE_SUBSCRIPTION_ID=',json.load(sys.stdin)[0]['id'], sep='')" >> .env
 
 source .env
