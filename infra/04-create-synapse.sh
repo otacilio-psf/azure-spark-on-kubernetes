@@ -7,16 +7,12 @@ az synapse workspace create \
   --sql-admin-login-password $SYNAPSE_PASSWORD \
   --location $LOCATION
 
-#sudo apt install jq -y 
 
 WORKSPACEWEB=$(az synapse workspace show --name $SYNAPSE_NAME --resource-group $RESOURCE_GROUP | python3 -c "import sys, json;j = json.load(sys.stdin);print(j['connectivityEndpoints']['web'])")
-#WORKSPACEWEB=$(az synapse workspace show --name $SYNAPSE_NAME --resource-group $RESOURCE_GROUP | jq -r '.connectivityEndpoints | .web')
 
 WORKSPACEDEV=$(az synapse workspace show --name $SYNAPSE_NAME --resource-group $RESOURCE_GROUP | python3 -c "import sys, json;j = json.load(sys.stdin);print(j['connectivityEndpoints']['dev'])")
-#WORKSPACEDEV=$(az synapse workspace show --name $SYNAPSE_NAME --resource-group $RESOURCE_GROUP | jq -r '.connectivityEndpoints | .dev')
 
 CLIENTIP=$(curl -sb -H "Accept: application/json" "$WORKSPACEDEV" | python3 -c "import sys, json;j = json.load(sys.stdin);print(j['message'])")
-#CLIENTIP=$(curl -sb -H "Accept: application/json" "$WORKSPACEDEV" | jq -r '.message')
 CLIENTIP=${CLIENTIP##'Client Ip address : '}
 echo "Creating a firewall rule to enable access for IP address: $CLIENTIP"
 

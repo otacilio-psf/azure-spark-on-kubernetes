@@ -5,8 +5,8 @@ from schema import schema_enade
 import unicodedata
 
 class SparkJob:
-    storage_name = "datalakeigtibootcamp"
-    container_name = "datalake"
+    storage_name = os.getenv("STG_ACC_NAME")
+    container_name = os.getenv("LAKE_NAME")
     path = f"abfss://{container_name}@{storage_name}.dfs.core.windows.net/"
     bronze_path = "bronze/enade/MICRODADOS_ENADE_2017.txt"
     silver_path = "silver/enade"

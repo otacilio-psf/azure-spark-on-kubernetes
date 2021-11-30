@@ -26,7 +26,6 @@ bash infra/03-create-lake.sh
 bash infra/04-create-synapse.sh
 
 bash infra/05-access-assignments.sh
-
 ```
 
 ## Preparar k8s
@@ -34,33 +33,29 @@ bash infra/05-access-assignments.sh
 ### Baixar kubeconfig file
 ```
 bash infra/02-get-kubeconfig.sh
-
 ```
 
 ### Para facilitar os comandos usar um alias
 ```
 alias k=kubectl
-
 ```
 
 ### Criar namespace
 ```
 k create namespace processing
 k create namespace ingestion
-
 ```
 
 ### Criar Service Account e Role Bing
 ```
 k apply -f k8s/crb-spark.yaml
-
 ```
 
 ### Criar secrets
 ```
+# O arquivo .env é criado pelo script infra/05-access-assignments.sh durante a criação da infra
 k create secret generic azure-service-account --from-env-file=.env --namespace processing
 k create secret generic azure-service-account --from-env-file=.env --namespace ingestion
-
 ```
 
 ## Intalar Spark Operator
@@ -70,7 +65,6 @@ helm repo add spark-operator https://googlecloudplatform.github.io/spark-on-k8s-
 helm repo update
 
 helm install spark spark-operator/spark-operator --set image.tag=v1beta2-1.2.3-3.1.1 --namespace processing
-
 ```
 
 ## Ingestion app
@@ -80,27 +74,26 @@ helm install spark spark-operator/spark-operator --set image.tag=v1beta2-1.2.3-3
 docker build ingestion -f ingestion/Dockerfile -t otaciliopsf/cde-bootcamp:desafio-mod4-ingestion --network=host
 
 docker push otaciliopsf/cde-bootcamp:desafio-mod4-ingestion
+```
 
+### ConfigMap
+```
+k create configmap lake-config \
+    --from-literal=storage_account_name=$STG_ACC_NAME \
+    --from-literal=file_system_name=$LAKE_NAME \
+    --namespace ingestion
 ```
 
 ### Apply ingestion job
 ```
-# primeiro mudar o nome unico do pod
-cat k8s/ingestion-job.yaml |\
-python3 -c "import sys,yaml,uuid;y=yaml.safe_load(sys.stdin);y['metadata']['name']=y['metadata']['name'][:-8]+str(uuid.uuid4())[:8];print(yaml.dump(y))"\
-> k8s/ingestion-job.yaml
-
-k apply -f k8s/ingestion-job.yaml
-
+k replace --force -f k8s/ingestion-job.yaml
 ```
 
 ### Logs
 ```
-ING_POD_NAME=$(cat k8s/ingestion-job.yaml |\
-python3 -c "import sys,yaml,uuid;y=yaml.safe_load(sys.stdin);print(y['metadata']['name'])")
+ING_POD_NAME=$(k get pods --selector=job-name=ingestion-job --output=jsonpath='{.items[*].metadata.name}' -n ingestion)
 
 k logs $ING_POD_NAME -n ingestion --follow
-
 ```
 
 ## Spark
@@ -110,34 +103,31 @@ k logs $ING_POD_NAME -n ingestion --follow
 docker build spark -f spark/Dockerfile -t otaciliopsf/cde-bootcamp:desafio-mod4
 
 docker push otaciliopsf/cde-bootcamp:desafio-mod4
+```
 
+### ConfigMap
+```
+# Spark Operator possui algumas steps a mais para aceitar configmap, por esse motivos vamos passar como um secret
+k create secret generic lake-config \
+    --from-literal=storage_account_name=$STG_ACC_NAME \
+    --from-literal=file_system_name=$LAKE_NAME \
+    --namespace processing
 ```
 
 ### Apply job
 ```
-# primeiro muda o nome unico da Spark Application
-cat k8s/spark-job.yaml |\
-python3 -c "import sys,yaml,uuid;y=yaml.safe_load(sys.stdin);y['metadata']['name']=y['metadata']['name'][:-8]+str(uuid.uuid4())[:8];print(yaml.dump(y))"\
-> k8s/spark-job.yaml
-
-k apply -f k8s/spark-job.yaml
-
+k replace --force -f k8s/spark-job.yaml
 ```
 
 ### logs
 ```
-SPARK_APP_NAME=$(cat k8s/spark-job.yaml |\
-python3 -c "import sys,yaml,uuid;y=yaml.safe_load(sys.stdin);print(y['metadata']['name'])")'-driver'
-
-k logs $SPARK_APP_NAME -n processing --follow
-
+k logs spark-job-igti-desafio-driver -n processing --follow
 ```
 
 ## Azure Synapse Serveless SQL Poll
 Acessar o Synapse workspace através do link gerado
 ```
 bash infra/04-get-workspace-url.sh
-
 ```
 Para começar a usar siga os passos
 
@@ -152,7 +142,6 @@ Pronto, o Synapse esta pronto para receber as querys.
 bash infra/99-delete-service-principal.sh
 
 bash infra/99-delete-rg.sh
-
 ```
 
 # Conclusão
